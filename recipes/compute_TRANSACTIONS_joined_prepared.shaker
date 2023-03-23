@@ -1,0 +1,334 @@
+{
+  "columnsSelection": {
+    "mode": "ALL"
+  },
+  "explorationSampling": {
+    "_refreshTrigger": 0,
+    "selection": {
+      "filter": {
+        "distinct": false,
+        "enabled": false
+      },
+      "latestPartitionsN": 1,
+      "maxRecords": 10000,
+      "maxRecordsForDisplay": -1,
+      "ordering": {
+        "rules": [],
+        "enabled": false
+      },
+      "withinFirstN": -1,
+      "partitionSelectionMethod": "ALL",
+      "maxStoredBytes": 104857600,
+      "targetRatio": 0.02,
+      "maxReadUncompressedBytes": -1,
+      "samplingMethod": "HEAD_SEQUENTIAL",
+      "timeout": -1
+    },
+    "autoRefreshSample": false
+  },
+  "explorationFilters": [],
+  "columnUseScientificNotationByName": {},
+  "origin": "PREPARE_RECIPE",
+  "exploreUIParams": {
+    "autoRefresh": true
+  },
+  "steps": [
+    {
+      "preview": false,
+      "name": "Data cleaning",
+      "metaType": "GROUP",
+      "disabled": false,
+      "steps": [
+        {
+          "preview": false,
+          "metaType": "PROCESSOR",
+          "disabled": false,
+          "type": "FilterOnBadType",
+          "params": {
+            "booleanMode": "AND",
+            "columns": [
+              "signature_provided"
+            ],
+            "action": "REMOVE_ROW",
+            "appliesTo": "SINGLE_COLUMN",
+            "type": "LongMeaning"
+          },
+          "alwaysShowComment": false
+        },
+        {
+          "preview": false,
+          "metaType": "PROCESSOR",
+          "disabled": false,
+          "type": "FindReplace",
+          "params": {
+            "output": "authorized_flag_description",
+            "mapping": [
+              {
+                "from": "0",
+                "to": "Fraudulent"
+              },
+              {
+                "from": "1",
+                "to": "Authorized"
+              }
+            ],
+            "normalization": "EXACT",
+            "columns": [
+              "authorized_flag"
+            ],
+            "appliesTo": "SINGLE_COLUMN",
+            "stopAfterFirstMatch": false,
+            "matching": "FULL_STRING"
+          },
+          "alwaysShowComment": false
+        }
+      ],
+      "alwaysShowComment": false
+    },
+    {
+      "preview": false,
+      "name": "Geo handling",
+      "metaType": "GROUP",
+      "disabled": false,
+      "steps": [
+        {
+          "preview": false,
+          "metaType": "PROCESSOR",
+          "disabled": false,
+          "type": "GeoPointCreator",
+          "params": {
+            "out_column": "merchant_location",
+            "lat_column": "merchant_latitude",
+            "lon_column": "merchant_longitude"
+          },
+          "alwaysShowComment": false
+        },
+        {
+          "preview": false,
+          "metaType": "PROCESSOR",
+          "disabled": false,
+          "type": "GeoPointCreator",
+          "params": {
+            "out_column": "card_location",
+            "lat_column": "card_latitude",
+            "lon_column": "card_longitude"
+          },
+          "alwaysShowComment": false
+        },
+        {
+          "preview": false,
+          "metaType": "PROCESSOR",
+          "disabled": false,
+          "type": "CityLevelReverseGeocoder",
+          "params": {
+            "doOutputBoundaries": false,
+            "l4OutCol": "merchant_state",
+            "inputCol": "merchant_location"
+          },
+          "alwaysShowComment": false
+        },
+        {
+          "preview": false,
+          "metaType": "PROCESSOR",
+          "disabled": false,
+          "type": "CityLevelReverseGeocoder",
+          "params": {
+            "doOutputBoundaries": false,
+            "l4OutCol": "card_state",
+            "inputCol": "card_location"
+          },
+          "alwaysShowComment": false
+        }
+      ],
+      "alwaysShowComment": false
+    },
+    {
+      "preview": false,
+      "name": "Data enrichment",
+      "metaType": "GROUP",
+      "disabled": false,
+      "steps": [
+        {
+          "preview": false,
+          "metaType": "PROCESSOR",
+          "disabled": false,
+          "type": "SwitchCase",
+          "params": {
+            "mapping": [
+              {
+                "from": "internet",
+                "to": "essential"
+              },
+              {
+                "from": "gas",
+                "to": "essential"
+              },
+              {
+                "from": "luxury goods",
+                "to": "discretionary"
+              },
+              {
+                "from": "consumer electronics",
+                "to": "discretionary"
+              }
+            ],
+            "outputColumn": "spending_type",
+            "normalization": "EXACT",
+            "defaultValue": "standard",
+            "inputColumn": "merchant_subsector_description"
+          },
+          "alwaysShowComment": false
+        },
+        {
+          "preview": true,
+          "metaType": "PROCESSOR",
+          "disabled": false,
+          "type": "VisualIfRule",
+          "params": {
+            "legacyPositioning": false,
+            "visualIfDesc": {
+              "elseIfThens": [
+                {
+                  "filter": {
+                    "uiData": {
+                      "mode": "\u0026\u0026",
+                      "conditions": [
+                        {
+                          "input": "purchase_amount",
+                          "col": "authorized_flag",
+                          "num": 100.0,
+                          "operator": "\u003e\u003d [number]"
+                        },
+                        {
+                          "input": "signature_provided",
+                          "col": "authorized_flag",
+                          "num": 0.0,
+                          "operator": "\u003d\u003d [number]"
+                        }
+                      ]
+                    },
+                    "distinct": true,
+                    "enabled": true
+                  },
+                  "actions": [
+                    {
+                      "outputColumnName": "risk",
+                      "column": "transaction_id",
+                      "formula": "",
+                      "value": "medium",
+                      "operator": "ASSIGN_VALUE"
+                    }
+                  ]
+                }
+              ],
+              "elseActions": [
+                {
+                  "outputColumnName": "risk",
+                  "column": "transaction_id",
+                  "formula": "",
+                  "value": "low",
+                  "operator": "ASSIGN_VALUE"
+                }
+              ],
+              "ifThen": {
+                "filter": {
+                  "uiData": {
+                    "mode": "\u0026\u0026",
+                    "conditions": [
+                      {
+                        "input": "purchase_amount",
+                        "col": "authorized_flag",
+                        "num": 500.0,
+                        "operator": "\u003e\u003d [number]"
+                      },
+                      {
+                        "input": "signature_provided",
+                        "col": "authorized_flag",
+                        "num": 0.0,
+                        "operator": "\u003d\u003d [number]"
+                      }
+                    ]
+                  },
+                  "distinct": true,
+                  "enabled": true
+                },
+                "actions": [
+                  {
+                    "outputColumnName": "risk",
+                    "column": "transaction_id",
+                    "formula": "",
+                    "value": "high",
+                    "operator": "ASSIGN_VALUE"
+                  }
+                ]
+              }
+            }
+          },
+          "alwaysShowComment": false
+        }
+      ],
+      "alwaysShowComment": false
+    }
+  ],
+  "maxProcessedMemTableBytes": -1,
+  "previewMode": "ALL_ROWS",
+  "vizSampling": {
+    "_refreshTrigger": 0,
+    "selection": {
+      "useMemTable": false,
+      "filter": {
+        "distinct": false,
+        "enabled": false
+      },
+      "latestPartitionsN": 1,
+      "maxRecords": -1,
+      "ordering": {
+        "rules": [],
+        "enabled": false
+      },
+      "withinFirstN": -1,
+      "partitionSelectionMethod": "ALL",
+      "targetRatio": 0.02,
+      "maxReadUncompressedBytes": -1,
+      "samplingMethod": "FULL"
+    },
+    "autoRefreshSample": false
+  },
+  "analysisColumnData": {},
+  "columnWidthsByName": {
+    "merchant_latitude": 143,
+    "spending_type": 113,
+    "authorized_flag_description": 218,
+    "card_fico_score": 128,
+    "merchant_id": 127,
+    "card_longitude": 134,
+    "item_category": 113,
+    "merchant_state_enName": 173,
+    "card_state": 120,
+    "card_state_enName": 169,
+    "signature_provided": 150,
+    "card_age": 100,
+    "transaction_id": 120,
+    "card_first_active_month": 188,
+    "card_latitude": 134,
+    "merchant_location": 169,
+    "merchant_category_id": 165,
+    "card_id": 120,
+    "merchant_subsector_description": 240,
+    "merchant_longitude": 150,
+    "card_location": 162,
+    "purchase_amount": 134,
+    "card_reward_program": 158,
+    "merchant_state": 148,
+    "risk": 100,
+    "purchase_date": 148,
+    "authorized_flag": 128
+  },
+  "sorting": [],
+  "globalSearchQuery": "",
+  "coloring": {
+    "scheme": "MEANING_AND_STATUS",
+    "individualColumns": [],
+    "valueColoringMode": "HASH"
+  }
+}
