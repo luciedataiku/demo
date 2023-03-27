@@ -168,7 +168,7 @@
     },
     "dkuProperties": []
   },
-  "name": "[Starter] MLPractitioner",
+  "name": "[Starter] MLPractitioner (prune-flow)",
   "imgPattern": 1,
   "metrics": {
     "probes": [],
@@ -225,11 +225,11 @@
     }
   },
   "versionTag": {
-    "versionNumber": 12,
+    "versionNumber": 13,
     "lastModifiedBy": {
       "login": "lucie.luneau@dataiku.com"
     },
-    "lastModifiedOn": 1679930315414
+    "lastModifiedOn": 1679930317617
   },
   "creationTag": {
     "versionNumber": 0,
@@ -238,7 +238,7 @@
     },
     "lastModifiedOn": 1670512107673
   },
-  "shortDesc": "The project *STARTERMLPRACTITIONER* was created by sylvain.franco on Dec 08th 2022",
+  "shortDesc": "The project *STARTERMLPRACTITIONER* was created by sylvain.franco on Dec 08th 2022\nThe project *_STARTER_MLPRACTITIONER_PRUNE_FLOW* was copied from *STARTERMLPRACTITIONER* by lucie.luneau on Mar 27th 2023",
   "tags": [
     "duplicated",
     "imported"
