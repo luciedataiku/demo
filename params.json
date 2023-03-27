@@ -225,11 +225,11 @@
     }
   },
   "versionTag": {
-    "versionNumber": 11,
+    "versionNumber": 12,
     "lastModifiedBy": {
       "login": "lucie.luneau@dataiku.com"
     },
-    "lastModifiedOn": 1679930133677
+    "lastModifiedOn": 1679930315414
   },
   "creationTag": {
     "versionNumber": 0,
